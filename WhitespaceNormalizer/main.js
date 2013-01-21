@@ -20,7 +20,7 @@ define(function (require, exports, module) {
         regex,
         match;
 
-      while ((text = doc.getLine(currentLineIndex)) !== undefined) {
+      while ((text = doc.getLine(currentLineIndex)) != undefined) {
         //trim trailing whitespaces
         regex = /[ \t]+$/g;
         match = regex.exec(text);
@@ -52,7 +52,7 @@ define(function (require, exports, module) {
 
       //ensure newline at the end of file
       text = doc.getLine(currentLineIndex - 1);
-      if (text !== null && text.length > 0 && text[text.length - 1] !== '\n') {
+      if (text != undefined && text.length > 0 && text[text.length - 1] !== '\n') {
         doc.replaceRange(
           '\n',
           {line: currentLineIndex, ch: text[text.length - 1]});
