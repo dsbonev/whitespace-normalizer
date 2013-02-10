@@ -5,7 +5,7 @@ define(function (require, exports, module) {
   var CommandManager = brackets.getModule('command/CommandManager'),
     Commands = brackets.getModule('command/Commands'),
     DocumentManager = brackets.getModule('document/DocumentManager'),
-    Editor = brackets.getModule('editor/Editor'),
+    Editor = brackets.getModule('editor/Editor').Editor,
     Menus = brackets.getModule('command/Menus'),
     PreferencesManager = brackets.getModule('preferences/PreferencesManager');
 
@@ -15,7 +15,7 @@ define(function (require, exports, module) {
 
     doc.batchOperation(function () {
       var currentLineIndex = 0,
-        tabSize = Editor.Editor.getTabSize(),
+        tabSize = Editor.getUseTabChar() ? Editor.getTabSize() : Editor.getIndentUnit(),
         tabSpaces = new Array(tabSize + 1).join(' '),
         regex,
         match;
