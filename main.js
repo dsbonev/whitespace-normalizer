@@ -13,53 +13,61 @@ define(function (/* require, exports, module */) {
 
   function main(event, doc) {
     doc.batchOperation(function () {
-      var text,
-        currentLineIndex = 0,
-        tabSize = Editor.getUseTabChar() ? Editor.getTabSize() : (Editor.getSpaceUnits ? /* Sprint 22+ */ Editor.getSpaceUnits() : Editor.getIndentUnit()),
-        tabSpaces = new Array(tabSize + 1).join(' '),
-        regex,
+      var line,
+        lineIndex = 0,
+        indent = new Array(getIndentSize(Editor) + 1).join(' '),
+        pattern,
         match;
 
-      while ((text = doc.getLine(currentLineIndex)) !== undefined) {
+      while ((line = doc.getLine(lineIndex)) !== undefined) {
         //trim trailing whitespaces
-        regex = /[ \t]+$/g;
-        match = regex.exec(text);
+        pattern = /[ \t]+$/g;
+        match = pattern.exec(line);
         if (match) {
           doc.replaceRange(
             '',
-            {line: currentLineIndex, ch: match.index},
-            {line: currentLineIndex, ch: regex.lastIndex});
+            {line: lineIndex, ch: match.index},
+            {line: lineIndex, ch: pattern.lastIndex});
 
-          text = doc.getLine(currentLineIndex);
+          line = doc.getLine(lineIndex);
         }
 
         //transform tabs to spaces
-        regex = /\t/g;
-        match = regex.exec(text);
+        pattern = /\t/g;
+        match = pattern.exec(line);
         while (match) {
           doc.replaceRange(
-            tabSpaces,
-            {line: currentLineIndex, ch: match.index},
-            {line: currentLineIndex, ch: regex.lastIndex});
+            indent,
+            {line: lineIndex, ch: match.index},
+            {line: lineIndex, ch: pattern.lastIndex});
 
-          text = doc.getLine(currentLineIndex);
+          line = doc.getLine(lineIndex);
 
-          match = regex.exec(text);
+          match = pattern.exec(line);
         }
 
-        currentLineIndex += 1;
+        lineIndex += 1;
       }
 
       //ensure newline at the end of file
-      text = doc.getLine(currentLineIndex - 1);
-      if (text !== undefined && text.length > 0 && text.slice(-1) !== '\n') {
+      line = doc.getLine(lineIndex - 1);
+      if (line !== undefined && line.length > 0 && line.slice(-1) !== '\n') {
         doc.replaceRange(
           '\n',
-          {line: currentLineIndex, ch: text.slice(-1)});
+          {line: lineIndex, ch: line.slice(-1)});
       }
     });
 
     CommandManager.execute(Commands.FILE_SAVE, {doc: doc});
+  }
+
+  function getIndentSize(editor) {
+    return editor.getUseTabChar() ?
+      editor.getTabSize() :
+      (editor.getSpaceUnits ?
+        editor.getSpaceUnits() /* Sprint 22+ */ :
+        editor.getIndentUnit()
+      );
   }
 
   function setEnabled(prefs, command, enabled) {
