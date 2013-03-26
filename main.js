@@ -15,7 +15,7 @@ define(function (require, exports, module) {
 
     doc.batchOperation(function () {
       var currentLineIndex = 0,
-        tabSize = Editor.getUseTabChar() ? Editor.getTabSize() : Editor.getIndentUnit(),
+        tabSize = Editor.getUseTabChar() ? Editor.getTabSize() : (Editor.getIndentUnit ? Editor.getIndentUnit() : Editor.getSpaceUnits()),
         tabSpaces = new Array(tabSize + 1).join(' '),
         regex,
         match;
