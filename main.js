@@ -1,5 +1,7 @@
 
-define(function (require, exports, module) {
+/* global brackets, define */
+
+define(function (/* require, exports, module */) {
   'use strict';
 
   var CommandManager = brackets.getModule('command/CommandManager'),
@@ -10,17 +12,15 @@ define(function (require, exports, module) {
     PreferencesManager = brackets.getModule('preferences/PreferencesManager');
 
   function main(event, doc) {
-    var editor = doc._masterEditor,
-      text;
-
     doc.batchOperation(function () {
-      var currentLineIndex = 0,
+      var text,
+        currentLineIndex = 0,
         tabSize = Editor.getUseTabChar() ? Editor.getTabSize() : Editor.getIndentUnit(),
         tabSpaces = new Array(tabSize + 1).join(' '),
         regex,
         match;
 
-      while ((text = doc.getLine(currentLineIndex)) != undefined) {
+      while ((text = doc.getLine(currentLineIndex)) !== undefined) {
         //trim trailing whitespaces
         regex = /[ \t]+$/g;
         match = regex.exec(text);
@@ -52,10 +52,10 @@ define(function (require, exports, module) {
 
       //ensure newline at the end of file
       text = doc.getLine(currentLineIndex - 1);
-      if (text != undefined && text.length > 0 && text[text.length - 1] !== '\n') {
+      if (text !== undefined && text.length > 0 && text.slice(-1) !== '\n') {
         doc.replaceRange(
           '\n',
-          {line: currentLineIndex, ch: text[text.length - 1]});
+          {line: currentLineIndex, ch: text.slice(-1)});
       }
     });
 
