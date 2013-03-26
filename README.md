@@ -8,10 +8,9 @@ brackets extension that does the following on document save:
 
 Install
 =======
-1. [Download](https://github.com/dsbonev/whitespace-normalizer/archive/master.zip)
-2. Unzip in **user** folder in **Brackets > Help > Show Extensions Folder**
-3. Restart Brackets
-4. Enable the extension from **Brackets > Edit > Whitespace Normalizer**
+1. Select menu item **File > Install Extension** in Brackets
+2. Fill in URL *https://github.com/dsbonev/whitespace-normalizer* and click *Install* button
+3. Enable the extension from menu item **Edit > Whitespace Normalizer**
 
 Licence
 =======
