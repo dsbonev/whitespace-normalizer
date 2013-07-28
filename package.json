@@ -1,0 +1,12 @@
+{
+    "name": "dsbonev.whitespace-normalizer",
+    "title": "Whitespace Normalizer",
+    "description": "trims trailing whitespaces; transforms tabs to spaces; adds newline at the end of file",
+    "homepage": "https://github.com/dsbonev/whitespace-normalizer",
+    "version": "0.1.2",
+    "author": "Dimitar Bonev <dsbonev@gmail.com> (https://github.com/dsbonev/)",
+    "license": "MIT",
+    "engines": {
+        "brackets": ">=0.01.0"
+    }
+}
