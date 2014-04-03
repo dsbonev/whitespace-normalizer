@@ -64,10 +64,7 @@ define(function (/* require, exports, module */) {
   function getIndentSize(editor) {
     return editor.getUseTabChar() ?
       editor.getTabSize() :
-      (editor.getSpaceUnits ?
-        editor.getSpaceUnits() /* Sprint 22+ */ :
-        editor.getIndentUnit()
-      );
+      editor.getSpaceUnits();
   }
 
   function setEnabled(prefs, command, enabled) {
@@ -93,6 +90,6 @@ define(function (/* require, exports, module */) {
 
   menu.addMenuDivider();
   menu.addMenuItem(COMMAND_ID);
-  
+
   setEnabled(prefs, COMMAND, enabled);
 });
