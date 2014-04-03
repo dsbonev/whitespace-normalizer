@@ -3,7 +3,7 @@
     "title": "Whitespace Normalizer",
     "description": "trims trailing whitespaces; transforms tabs to spaces; adds newline at the end of file",
     "homepage": "https://github.com/dsbonev/whitespace-normalizer",
-    "version": "0.1.2",
+    "version": "0.2.0",
     "author": "Dimitar Bonev <dsbonev@gmail.com> (https://github.com/dsbonev/)",
     "license": "MIT",
     "engines": {
