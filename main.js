@@ -9,7 +9,7 @@ define(function (/* require, exports, module */) {
     DocumentManager = brackets.getModule('document/DocumentManager'),
     Editor = brackets.getModule('editor/Editor').Editor,
     Menus = brackets.getModule('command/Menus'),
-    PreferencesManager = brackets.getModule('preferences/PreferencesManager');
+    EXTENSION_KEY = 'com.github.dsbonev.WhitespaceNormalizer';
 
   function main(event, doc) {
     doc.batchOperation(function () {
@@ -72,22 +72,27 @@ define(function (/* require, exports, module */) {
 
   function setEnabled(prefs, command, enabled) {
     $(DocumentManager)[enabled ? 'on' : 'off']('documentSaved', main);
-    prefs.setValue('enabled', enabled);
+    prefs.set('enabled', enabled);
     command.setChecked(enabled);
   }
 
-  var PREFERENCES_KEY = 'com.github.dsbonev.WhitespaceNormalizer',
-    prefs = PreferencesManager.getPreferenceStorage(PREFERENCES_KEY, {enabled: false}),
-    enabled = prefs.getValue('enabled'),
-    COMMAND_ID = PREFERENCES_KEY,
+  var PreferencesManager = brackets.getModule('preferences/PreferencesManager'),
+    PREFERENCES_KEY = EXTENSION_KEY,
+    prefs = PreferencesManager.getExtensionPrefs(PREFERENCES_KEY);
+
+  prefs.definePreference("enabled", "boolean", "true");
+  var enabled = prefs.get('enabled');
+
+
+  var menu = Menus.getMenu(Menus.AppMenuBar.EDIT_MENU),
+    COMMAND_ID = EXTENSION_KEY,
     onCommandExecute = function () {
       setEnabled(prefs, this, !this.getChecked());
     },
     COMMAND = CommandManager.register('Whitespace Normalizer', COMMAND_ID, onCommandExecute);
 
-  setEnabled(prefs, COMMAND, enabled);
-
-  var menu = Menus.getMenu(Menus.AppMenuBar.EDIT_MENU);
   menu.addMenuDivider();
   menu.addMenuItem(COMMAND_ID);
+  
+  setEnabled(prefs, COMMAND, enabled);
 });
