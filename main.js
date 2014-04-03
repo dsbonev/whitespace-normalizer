@@ -70,6 +70,7 @@ define(function (/* require, exports, module */) {
   function setEnabled(prefs, command, enabled) {
     $(DocumentManager)[enabled ? 'on' : 'off']('documentSaved', main);
     prefs.set('enabled', enabled);
+    prefs.save();
     command.setChecked(enabled);
   }
 
