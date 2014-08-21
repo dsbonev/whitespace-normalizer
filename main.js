@@ -11,7 +11,11 @@ define(function (/* require, exports, module */) {
     Menus = brackets.getModule('command/Menus'),
     EXTENSION_KEY = 'com.github.dsbonev.WhitespaceNormalizer';
 
+  $(DocumentManager).on('documentSaved', main);
+
   function main(event, doc) {
+    if (!extensionEnabledPref.enabled()) return;
+
     doc.batchOperation(function () {
       var line,
         lineIndex = 0,
@@ -20,41 +24,48 @@ define(function (/* require, exports, module */) {
         match;
 
       while ((line = doc.getLine(lineIndex)) !== undefined) {
-        //trim trailing whitespaces
-        pattern = /[ \t]+$/g;
-        match = pattern.exec(line);
-        if (match) {
-          doc.replaceRange(
-            '',
-            {line: lineIndex, ch: match.index},
-            {line: lineIndex, ch: pattern.lastIndex});
+        // trim trailing whitespaces
+        if (trimEnabledPref.enabled()) {
+          pattern = /[ \t]+$/g;
+          match = pattern.exec(line);
+          if (match) {
+            doc.replaceRange(
+              '',
+              {line: lineIndex, ch: match.index},
+              {line: lineIndex, ch: pattern.lastIndex});
 
-          line = doc.getLine(lineIndex);
+            line = getUpdatedLineAt(doc, lineIndex);
+          }
         }
 
-        //transform tabs to spaces
-        pattern = /\t/g;
-        match = pattern.exec(line);
-        while (match) {
-          doc.replaceRange(
-            indent,
-            {line: lineIndex, ch: match.index},
-            {line: lineIndex, ch: pattern.lastIndex});
-
-          line = doc.getLine(lineIndex);
-
+        // transform tabs to spaces
+        if (transfEnabledPref.enabled()) {
+          pattern = /\t/g;
           match = pattern.exec(line);
+          while (match) {
+            doc.replaceRange(
+              indent,
+              {line: lineIndex, ch: match.index},
+              {line: lineIndex, ch: pattern.lastIndex});
+
+            line = getUpdatedLineAt(doc, lineIndex);
+
+            match = pattern.exec(line);
+          }
         }
 
         lineIndex += 1;
       }
+      lineIndex -= 1
 
-      //ensure newline at the end of file
-      line = doc.getLine(lineIndex - 1);
-      if (line !== undefined && line.length > 0 && line.slice(-1) !== '\n') {
-        doc.replaceRange(
-          '\n',
-          {line: lineIndex, ch: line.slice(-1)});
+      // ensure newline at the end of file
+      if (eofnlEnabledPref.enabled()) {
+        line = doc.getLine(lineIndex);
+        if (line !== undefined && line.length > 0 && line.slice(-1) !== '\n') {
+          doc.replaceRange(
+            '\n',
+            {line: lineIndex + 1, ch: line.slice(-1)});
+        }
       }
     });
 
@@ -67,8 +78,11 @@ define(function (/* require, exports, module */) {
       editor.getSpaceUnits();
   }
 
+  function getUpdatedLineAt(doc, lineIndex) {
+    return doc.getLine(lineIndex);
+  }
+
   function setEnabled(prefs, command, enabled) {
-    $(DocumentManager)[enabled ? 'on' : 'off']('documentSaved', main);
     prefs.set('enabled', enabled);
     prefs.save();
     command.setChecked(enabled);
@@ -78,19 +92,47 @@ define(function (/* require, exports, module */) {
     PREFERENCES_KEY = EXTENSION_KEY,
     prefs = PreferencesManager.getExtensionPrefs(PREFERENCES_KEY);
 
-  prefs.definePreference("enabled", "boolean", "true");
-  var enabled = prefs.get('enabled');
-
-
-  var menu = Menus.getMenu(Menus.AppMenuBar.EDIT_MENU),
-    COMMAND_ID = EXTENSION_KEY,
-    onCommandExecute = function () {
-      setEnabled(prefs, this, !this.getChecked());
+  Preference.prototype = {
+    constructor: Preference,
+    set: function(state) {
+      prefs.set(this.name, state)
+      prefs.save()
+      this.command.setChecked(state)
     },
-    COMMAND = CommandManager.register('Whitespace Normalizer', COMMAND_ID, onCommandExecute);
+    toggle: function () {
+      this.set(!this.command.getChecked())
+    },
+    enabled: function () {
+      return this.value() === 'true' || this.value() === true
+    },
+    value: function () {
+      return prefs.get(this.name)
+    },
+    registerCommand: function () {
+      var self = this;
+      return CommandManager.register(this.label, this.commandId, function () {
+        self.toggle()
+      })
+    }
+  }
 
-  menu.addMenuDivider();
-  menu.addMenuItem(COMMAND_ID);
+  Preference.menu = Menus.getMenu(Menus.AppMenuBar.EDIT_MENU)
+  Preference.menu.addMenuDivider()
 
-  setEnabled(prefs, COMMAND, enabled);
+  var extensionEnabledPref = new Preference('enabled', '', '')
+  var trimEnabledPref = new Preference('trim', 'trim', 'trim')
+  var transfEnabledPref = new Preference('transf', 'transf', 'transf')
+  var eofnlEnabledPref = new Preference('eofnl', 'eofnl', 'eofnl')
+
+  function Preference(name, label, commandIdSuffix) {
+    this.name = name
+    this.label = 'Whitespace Normalizer' + (label ? (' ' + label) : '')
+    this.commandId = EXTENSION_KEY + (commandIdSuffix ? ('.' + commandIdSuffix) : '')
+    this.command = this.registerCommand()
+
+    prefs.definePreference(this.name, "boolean", "true")
+    this.set(prefs.get(this.name))
+
+    this.constructor.menu.addMenuItem(this.commandId)
+  }
 });
