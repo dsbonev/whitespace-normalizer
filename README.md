@@ -1,7 +1,7 @@
-whitespace-normalizer
+Whitespace Normalizer
 =====================
 
-brackets extension that does the following on document save:
+brackets extension that features (on document save):
 * trims trailing whitespaces
 * transforms tabs to spaces
 * ensures newline at file end
