@@ -11,6 +11,7 @@ Install
 1. Select menu item **File > Extension Manager** in Brackets
 2. Click **Install from URL** button
 3. Fill in the URL **https://github.com/dsbonev/whitespace-normalizer/** and click **Install** button
+4. Turn off/on extension features from **Edit** menu
 
 Licence
 =======
