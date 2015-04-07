@@ -1,3 +1,8 @@
+Deprecation warning
+=====================
+This is no longer maintained, it was a small project for exploring some of Brackets' internals.
+Suggested alternative is [wsSanitizer](https://github.com/MiguelCastillo/Brackets-wsSanitizer) which covers all features this project has and even more.
+
 Whitespace Normalizer
 =====================
 
