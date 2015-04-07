@@ -15,7 +15,7 @@ define(function (/* require, exports, module */) {
     prefs = PreferencesManager.getExtensionPrefs(PREFERENCES_KEY),
     justModified = false;
 
-    $(DocumentManager).on('documentSaved', main);
+  $(DocumentManager).on('documentSaved', main);
 
   function main(event, doc) {
     if (!extensionEnabledPref.enabled()) return;
