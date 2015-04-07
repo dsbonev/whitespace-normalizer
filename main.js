@@ -9,17 +9,26 @@ define(function (/* require, exports, module */) {
     DocumentManager = brackets.getModule('document/DocumentManager'),
     Editor = brackets.getModule('editor/Editor').Editor,
     Menus = brackets.getModule('command/Menus'),
-    EXTENSION_KEY = 'com.github.dsbonev.WhitespaceNormalizer';
+    EXTENSION_KEY = 'com.github.dsbonev.WhitespaceNormalizer',
+    PreferencesManager = brackets.getModule('preferences/PreferencesManager'),
+    PREFERENCES_KEY = EXTENSION_KEY,
+    prefs = PreferencesManager.getExtensionPrefs(PREFERENCES_KEY),
+    justModified = false;
 
   $(DocumentManager).on('documentSaved', main);
 
   function main(event, doc) {
     if (!extensionEnabledPref.enabled()) return;
+    if (justModified) {
+      justModified = false;
+      return;
+    }
 
     doc.batchOperation(function () {
       var line,
         lineIndex = 0,
-        indent = new Array(getIndentSize(Editor) + 1).join(' '),
+        indentSize = getIndentSize(),
+        indent = new Array(indentSize + 1).join(' '),
         pattern,
         match;
 
@@ -33,27 +42,30 @@ define(function (/* require, exports, module */) {
               '',
               {line: lineIndex, ch: match.index},
               {line: lineIndex, ch: pattern.lastIndex});
-
-            line = getUpdatedLineAt(doc, lineIndex);
+            line = doc.getLine(lineIndex);
           }
         }
 
-        // transform tabs to spaces
-        if (transfEnabledPref.enabled()) {
-          pattern = /\t/g;
-          match = pattern.exec(line);
-          while (match) {
-            doc.replaceRange(
-              indent,
-              {line: lineIndex, ch: match.index},
-              {line: lineIndex, ch: pattern.lastIndex});
-
-            line = getUpdatedLineAt(doc, lineIndex);
-
-            match = pattern.exec(line);
+        // transform spaces to tabs
+        var replString = "",
+          pattern = /^[ \t]+/g,
+          rAllTabs = /\t/g,
+          rAllSpaces = new RegExp(indent,'g');
+        match = pattern.exec(line);
+        if (match) {
+          replString = match[0];
+          if (transfEnabledPref.enabled()) {
+            replString = match[0].replace(rAllTabs, indent);
           }
+          if (toTabsEnabledPref.enabled()) {
+            //Flick tabs to spaces, then convert the spaces back to tabs, to handle intermediary spaces, ex "\t  \t  "
+            replString = match[0].replace(rAllTabs, indent).replace(rAllSpaces, "\t");
+          }
+          doc.replaceRange(
+            replString,
+            {line: lineIndex, ch: match.index},
+            {line: lineIndex, ch: pattern.lastIndex});
         }
-
         lineIndex += 1;
       }
       lineIndex -= 1
@@ -68,18 +80,14 @@ define(function (/* require, exports, module */) {
         }
       }
     });
-
+    justModified = true;
     CommandManager.execute(Commands.FILE_SAVE, {doc: doc});
   }
 
-  function getIndentSize(editor) {
-    return editor.getUseTabChar() ?
-      editor.getTabSize() :
-      editor.getSpaceUnits();
-  }
-
-  function getUpdatedLineAt(doc, lineIndex) {
-    return doc.getLine(lineIndex);
+  function getIndentSize() {
+    return Editor.getUseTabChar() ?
+      Editor.getTabSize() :
+      Editor.getSpaceUnits();
   }
 
   function setEnabled(prefs, command, enabled) {
@@ -88,10 +96,15 @@ define(function (/* require, exports, module */) {
     command.setChecked(enabled);
   }
 
-  var PreferencesManager = brackets.getModule('preferences/PreferencesManager'),
-    PREFERENCES_KEY = EXTENSION_KEY,
-    prefs = PreferencesManager.getExtensionPrefs(PREFERENCES_KEY);
-
+  function Preference(name, label, commandIdSuffix) {
+    this.name = name;
+    this.label = label;
+    this.commandId = EXTENSION_KEY + (commandIdSuffix ? ('.' + commandIdSuffix) : '');
+    this.command = this.registerCommand();
+    prefs.definePreference(this.name, "boolean", "true")
+    this.set(prefs.get(this.name))
+    this.constructor.menu.addMenuItem(this.commandId)
+  }
   Preference.prototype = {
     constructor: Preference,
     set: function(state) {
@@ -119,20 +132,10 @@ define(function (/* require, exports, module */) {
   Preference.menu = Menus.getMenu(Menus.AppMenuBar.EDIT_MENU)
   Preference.menu.addMenuDivider()
 
-  var extensionEnabledPref = new Preference('enabled', '', '')
-  var trimEnabledPref = new Preference('trim', 'trim', 'trim')
-  var transfEnabledPref = new Preference('transf', 'transf', 'transf')
-  var eofnlEnabledPref = new Preference('eofnl', 'eofnl', 'eofnl')
+  var extensionEnabledPref = new Preference('enabled', 'Enable Whitespace Normalizer', ''),
+    trimEnabledPref = new Preference('trim', 'Trim trailing whitespace', 'trim'),
+    toTabsEnabledPref = new Preference('totabs', 'Normalize to tabs', 'totabs'),
+    transfEnabledPref = new Preference('transf', 'Normalize to spaces', 'transf'),
+    eofnlEnabledPref = new Preference('eofnl', 'End file with newline', 'eofnl');
 
-  function Preference(name, label, commandIdSuffix) {
-    this.name = name
-    this.label = 'Whitespace Normalizer' + (label ? (' ' + label) : '')
-    this.commandId = EXTENSION_KEY + (commandIdSuffix ? ('.' + commandIdSuffix) : '')
-    this.command = this.registerCommand()
-
-    prefs.definePreference(this.name, "boolean", "true")
-    this.set(prefs.get(this.name))
-
-    this.constructor.menu.addMenuItem(this.commandId)
-  }
 });
